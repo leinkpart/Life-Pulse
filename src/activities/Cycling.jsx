@@ -30,8 +30,8 @@ const Cycling = () => {
                 subscription = await Location.watchPositionAsync(
                     {
                         accuracy: Location.Accuracy.High,
-                        distanceInterval: 1, // Khoảng cách tính bằng mét (tăng lên 5 mét thay vì 1 mét)
-                        timeInterval: 5000,  // Tính bằng milliseconds
+                        distanceInterval: 1, // Khoảng cách tính bằng mét
+                        timeInterval: 3000,  // Tính bằng milliseconds
                     },
                     (position) => {
                         const { latitude, longitude } = position.coords;

@@ -158,7 +158,7 @@ const Reminder = ({ navigation, route, onDelete }) => {
                         onPress={() => handleTabPress('today')}
                         style={[styles.tab, selectedTab === 'today' && styles.activeTab]}
                     >
-                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'today' ? '#ff4634' : '#eb6c5c',}]}>
+                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'today' ? '#ff4634' : '#f88c93',}]}>
                             <MaterialCommunityIcons
                                 name="calendar-today"
                                 size={24}
@@ -182,7 +182,7 @@ const Reminder = ({ navigation, route, onDelete }) => {
                         onPress={() => handleTabPress('scheduled')}
                         style={[styles.tab, selectedTab === 'scheduled' && styles.activeTab]}
                     >
-                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'scheduled' ? '#7a78ed' : '#7d74fb',}]}>
+                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'scheduled' ? '#1b0ffa' : '#8c9ef8',}]}>
                             <MaterialCommunityIcons
                                 name="calendar-check"
                                 size={24}
@@ -205,7 +205,7 @@ const Reminder = ({ navigation, route, onDelete }) => {
                         onPress={() => handleTabPress('all')}
                         style={[styles.tab, selectedTab === 'all' && styles.activeTab]}
                     >
-                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'all' ? '#9e36ce' : '#cd72f8',}]}>                          
+                        <View style={[styles.iconRepeat, {backgroundColor: selectedTab === 'all' ? '#9e36ce' : '#e28cf8',}]}>                          
                             <MaterialCommunityIcons
                                 name="calendar-month-outline"
                                 size={24}

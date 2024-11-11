@@ -20,7 +20,7 @@ export default function Component() {
       yearly: [300000, 320000, 340000, 360000, 380000, 400000, 420000]
     })
 
-    const calculateDistance = steps => (steps * 0.0008).toFixed(3)  // distance in km
+    const calculateDistance = steps => (steps * 0.00075).toFixed(3)  // distance in km
     const calculateCalories = steps => (steps * 0.04).toFixed(0)    // kcal burned
     const calculateTime = steps => Math.floor(steps / 100)
 

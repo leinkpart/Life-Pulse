@@ -35,6 +35,12 @@
         {
           "motionPermission": "Allow $(PRODUCT_NAME) to access your device motion"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow LifePulse to access your location in the background."
+        }
       ]
     ]
   }

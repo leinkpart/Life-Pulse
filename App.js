@@ -1,33 +1,63 @@
-import { DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { useEffect } from 'react';
+// import { DarkTheme, DefaultTheme } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
-import {Modal, Text} from 'react-native';
+import {Modal, Text, View, ActivityIndicator } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ThemeProvider } from './component/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { GestureHandlerRootView } from'react-native-gesture-handler';
 
-import Login from './src/Login_Register/Login';
-import Register from './src/Login_Register/Register';
-import Home from './src/home/Home';
+import Login from './src/auth/Login';
+import Register from './src/auth/Register';
+import Home from './src/bottomTabs/Home';
 import Setting from './src/setting/Setting';
 import Reminder from './src/reminder/Reminder';
 import AddRemind from './src/reminder/AddRemind';
-
-const Stack = createStackNavigator(); 
-const Tab = createBottomTabNavigator();
-
-import Icon from 'react-native-vector-icons/Ionicons';
-import HomeIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import SettingIcon from 'react-native-vector-icons/MaterialIcons';
 import Repeat from './src/reminder/Repeat';
 import EditRemind from './src/reminder/EditRemind';
 import Cycling from './src/activities/Cycling';
 import Walking from './src/activities/Walking';
+import Post from './src/bottomTabs/Article';
+import NewPost from './component/NewPost';
+import Profile from './src/user/Profile';
 
-const TabNavigation = () => {
+const Stack = createStackNavigator(); 
+const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
+
+// import Icon from 'react-native-vector-icons/Ionicons';
+import HomeIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import SettingIcon from 'react-native-vector-icons/MaterialIcons';
+import { Entypo } from '@expo/vector-icons'
+
+const BottomTabs = () => {
   return(
-    <Tab.Navigator>
+    <Tab.Navigator
+    screenOptions={{
+      tabBarShowLabel: true,
+      tabBarStyle: {
+        position: 'absolute',
+        bottom: 0,
+        backgroundColor: '#fff',
+        borderRadius: 15,
+        height: 55,
+        elevation: 10,
+        width: '100%',
+        paddingBottom: 1
+      },
+      tabBarLabelStyle: {
+        fontSize: 15,
+        marginBottom: 8,
+        fontWeight: '900',
+      },
+      tabBarIconStyle: {
+        marginBottom: -8,
+      },
+    }}
+    >
       <Tab.Screen
         name="Main"
         component={Home}
@@ -41,6 +71,21 @@ const TabNavigation = () => {
           ),
         }}
       />
+
+      <Tab.Screen
+        name="Post"
+        component={Post}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <Entypo name="news" size={26} color={focused ? '#4F75FF' : '#697565'} />
+          ),
+          tabBarLabel: ({ focused }) => (
+            <Text style={{ fontSize: 14, color: focused ? '#4F75FF' : '#697565' }}>Posts</Text>
+          ),
+        }}
+      />
+
       <Tab.Screen
         name="Setting"
         component={Setting}
@@ -58,68 +103,85 @@ const TabNavigation = () => {
   )
 }
 
-const App = () => {
+const MainStack = () => {
   return (
-    <ThemeProvider>
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={Login}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen name="Register" component={Register}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen name="Home" component={TabNavigation} 
-          options={{
-            headerShown: false,
-          }}
-        />
+    <Stack.Navigator>
+      <Stack.Screen name="Home" component={BottomTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Reminder" component={Reminder} />
+      <Stack.Screen name="AddRemind" component={AddRemind} options={{ headerShown: false }} />
+      <Stack.Screen name="EditRemind" component={EditRemind} options={{ headerShown: false }} />
+      <Stack.Screen name="Repeat" component={Repeat} options={{ headerShown: true, presentation: 'modal' }} />
+      <Stack.Screen name="Cycling" component={Cycling} options={{ headerShown: true, presentation: 'modal' }} />
+      <Stack.Screen name="Walking" component={Walking} options={{ headerShown: true, presentation: 'modal' }} />
+      <Stack.Screen name="NewPost" component={NewPost} options={{ headerShown: true, presentation: 'modal' }} />
+      <Stack.Screen name="userProfile" component={MainDrawer} />
+    </Stack.Navigator>
+  );
+};
 
-        <Stack.Screen name="Reminder" component={Reminder} 
-          options={{
-            headerShown: true,
-          }}
-        />
+// Drawer setup for Profile
+const MainDrawer = () => (
+  <Drawer.Navigator
+  screenOptions={{
+    drawerPosition: 'left',
+    drawerType: 'slide',
+    headerShown: false,
+    drawerStyle: {
+      width: '70%',
+    },
+  }}
+  >
+    <Drawer.Screen name="Home" component={BottomTabs} options={{ headerShown: false }} />
+    {/* <Drawer.Screen name="Profile" component={Profile} options={{headerShown: false}} /> */}
+  </Drawer.Navigator>
+);
 
-        <Stack.Screen name="AddRemind" component={AddRemind} 
-          options={{
-            headerShown: false,
-          }}
-        />
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-        <Stack.Screen name="EditRemind" component={EditRemind} 
-          options={{
-            headerShown: false,
-          }}
-        />
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
 
-        <Stack.Screen name="Repeat" component={Repeat} 
-          options={{
-            headerShown: true,
-            presentation: 'modal'
-          }}
-        />
+  const checkLoginStatus = async () => {
+    try {
+      const value = await AsyncStorage.getItem('userSession');
+      if (value !== null) {
+        setIsLoggedIn(JSON.parse(value));
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        <Stack.Screen name="Cycling" component={Cycling} 
-          options={{
-            headerShown: true,
-            presentation: 'modal'
-          }}
-        />
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#4F75FF" />
+      </View>
+    );
+  }
 
-        <Stack.Screen name="Walking" component={Walking} 
-          options={{
-            headerShown: true,
-            presentation: 'modal'
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-    </ThemeProvider>
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator>
+            {isLoggedIn ? (
+              <Stack.Screen name="Main" component={MainStack} options={{ headerShown: false }} />
+            ) : (
+              <>
+                <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+                <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
+              </>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 };
 

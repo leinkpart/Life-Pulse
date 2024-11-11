@@ -97,10 +97,10 @@ const AddRemind = ({ navigation }) => {
                 Alert.alert('Error', 'The selected date cannot be less than the present date.');
                 // Reset lại ngày hiện tại nếu ngày chọn nhỏ hơn ngày hiện tại
                 setSelectedDate(today);
-                setShowDatePicker(false); // Đóng picker lại sau khi reset
+                setShowDatePicker(false);
             } else {
-                setSelectedDate(date); // Cập nhật nếu ngày hợp lệ
-                setShowDatePicker(false); // Đóng picker lại sau khi chọn thành công
+                setSelectedDate(date);
+                setShowDatePicker(false); 
             }
         }
     };
