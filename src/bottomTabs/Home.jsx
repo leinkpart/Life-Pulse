@@ -1,52 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, RefreshControl  } from 'react-native';
 import { FontAwesome, FontAwesome6, Ionicons } from '@expo/vector-icons';
 import { CircularProgress } from 'react-native-circular-progress';
 import { supabase } from '../../supabaseClient';
 
+
 const Home = ({ navigation }) => {
     const [currentDate, setCurrentDate] = useState('');
     const [userData, setUserData] = useState({ avatar_url: '', display_name: '' });
-    const [isMenuVisible, setMenuVisible] = useState(false);
     const [activities, setActivities] = useState([]);
     const [value, setValue] = useState(0);
     const [error, setError] = useState('');
+    const [refreshing, setRefreshing] = useState(false); // Trạng thái để kiểm tra khi đang làm mới dữ liệu
+
 
     useEffect(() => {
+        // Lấy dữ liệu người dùng từ Supabase
+        const fetchUserData = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                // Truy vấn dữ liệu từ bảng 'users'
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('display_name, avatar_url')
+                    .eq('user_id', user.id)
+                    .single(); // Lấy một bản ghi duy nhất
+    
+                if (error) {
+                    throw error;
+                }
+    
+                // Cập nhật state với dữ liệu người dùng
+                setUserData({
+                    avatar_url: data.avatar_url,
+                    display_name: data.display_name,
+                });
+            } catch (error) {
+                console.error('Error fetching user data:', error.message);
+            }
+        };
+    
         fetchUserData();
+    }, [userData.avatar_url]);
+    
+    const handleRefresh = useCallback( async() => {
+        setRefreshing(true);  // Bắt đầu quá trình làm mới
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                // Truy vấn dữ liệu từ bảng 'users'
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('display_name, avatar_url')
+                    .eq('user_id', user.id)
+                    .single(); // Lấy một bản ghi duy nhất
+    
+                if (error) {
+                    throw error;
+                }
+    
+                // Cập nhật state với dữ liệu người dùng
+                setUserData({
+                    avatar_url: data.avatar_url,
+                    display_name: data.display_name,
+                });
+            } catch (error) {
+                console.error('Error fetching user data:', error.message);
+            } finally {
+                setRefreshing(false);  // Kết thúc quá trình làm mới
+            }
     }, []);
-    
-    const fetchUserData = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (!user) throw new Error('No user found');
-        
-            const { data, error } = await supabase
-                .from('users')
-                .select('avatar_url, display_name')
-                .eq('user_id', user.id)
-                .single();
-        
-            if (error) throw error;
-        
-            setUserData(data);
-        } catch (error) {
-            setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-        }
-    };
-    
-    if (error) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.errorText}>Error: {error}</Text>
-            </View>
-        );
-    }
-
-    // const userSlide = () => {
-    //     setMenuVisible(!isMenuVisible);
-    // };
 
     useEffect(() => {
         const updateDate = () => {
@@ -61,7 +83,7 @@ const Home = ({ navigation }) => {
         const intervalId = setInterval(updateDate, 1000);
         return () => clearInterval(intervalId);
     }, []);
-   
+
     const Activity = ({ name, time, progress, icon }) => {
         return (
             <TouchableOpacity style={styles.activity} onPress={() => navigation.navigate(name)}>
@@ -98,22 +120,17 @@ const Home = ({ navigation }) => {
             <View style={styles.ContainerContent}>
                 <View style={styles.header}>
                     <View style={styles.userHeader}>
-                        <TouchableOpacity style={styles.userAvatar} onPress={() => navigation.openDrawer()}>
-                            {userData && (
-                                <>
-                                    <Image
-                                        source={{ uri: userData.avatar_url || '/placeholder.svg?height=100&width=100' }}
-                                        style={{ width: 47, height: 47, borderRadius: '50%'}}
-                                        resizeMode="cover"
-                                    />
-                                </>
-                            )}
+                        <TouchableOpacity style={styles.userAvatar}>
+                            <Image
+                                source={{ uri: userData.avatar_url || 'default-avatar-url' }}
+                                style={styles.avatarImage}
+                            />                  
                         </TouchableOpacity>                                                
 
                         <View style={styles.headerCont}>
                             {userData && (
                                 <>
-                                    <Text style={styles.userText}>Hi, {userData.display_name} !</Text>
+                                    <Text style={styles.userText}>Hi, {userData.display_name || 'User'}</Text>
                                 </>
                             )}                          
                             <View style={styles.headerContent}>
@@ -129,7 +146,14 @@ const Home = ({ navigation }) => {
                     </View>
                 </View>
 
-                <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                <ScrollView contentContainerStyle={styles.scrollViewContent}
+                    refreshControl={
+                        <RefreshControl 
+                            refreshing={refreshing} // Biến trạng thái để hiển thị trạng thái đang làm mới
+                            onRefresh={handleRefresh} // Hàm xử lý khi người dùng kéo xuống
+                        />
+                    }
+                >
                     <Text style={styles.actTextCont}>Contents</Text>
 
                     <View style={styles.content}> 
@@ -227,8 +251,8 @@ const styles = StyleSheet.create({
     header: { 
         flexDirection: 'row', 
         width: '100%', 
-        height: 60, 
-        backgroundColor: '#fff', 
+        height: 65, 
+        backgroundColor: '#1A1A1D', 
         borderRadius: 15, 
         justifyContent: 'space-between', 
         alignItems: 'center', 
@@ -242,13 +266,24 @@ const styles = StyleSheet.create({
 
     headerCont: { 
         paddingLeft: 10, 
-        paddingTop: 10 
+        paddingTop: 5 
     },
 
     headerContent: { 
         flexDirection: 'row', 
         alignItems: 'center',
     },
+
+    placeholderAvatar: {
+        backgroundColor: '#999',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      placeholderText: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+      },
 
     dateText: { 
         fontSize: 14, 
@@ -262,14 +297,21 @@ const styles = StyleSheet.create({
     },
 
     userAvatar: { 
-        backgroundColor: '#999', 
+        backgroundColor: '#f1f1f1', 
         borderRadius: '50%', 
         elevation: 5, 
         overflow: 'hidden',
         marginLeft: 5,
         justifyContent: 'center',
         height: 47,
-        width: 47
+        width: 47,
+        zIndex: 0
+    },
+
+    avatarImage: {
+        width: 47,
+        height: 47,
+        borderRadius: 23.5,
     },
 
     notifyContain: { 
@@ -291,7 +333,7 @@ const styles = StyleSheet.create({
     actTextCont: {
         fontSize: 28, 
         fontWeight: '700', 
-        color: '#222', 
+        color: '#D4F6FF', 
         marginLeft: 20, 
         marginTop: 15,
     },
@@ -322,7 +364,7 @@ const styles = StyleSheet.create({
 
     actText: { 
         fontSize: 24, 
-        color: '#222', 
+        color: '#D4F6FF', 
         marginLeft: 20, 
         marginTop: 10 
     },
@@ -339,7 +381,7 @@ const styles = StyleSheet.create({
         width: 120, 
         height: 'auto', 
         borderRadius: 10, 
-        backgroundColor: '#fff', 
+        backgroundColor: '#303030', 
         shadowColor: '#000', 
         shadowOffset: { width: 0, height: 2 }, 
         shadowOpacity: 0.25, 
@@ -381,12 +423,13 @@ const styles = StyleSheet.create({
 
     name: { 
         fontSize: 18, 
-        fontWeight: 'bold' 
+        fontWeight: 'bold',
+        color: '#fff',
     },
 
     time: { 
         fontSize: 16, 
-        color: '#666' 
+        color: '#999' 
     },
 
     functionButton: { 
@@ -430,9 +473,7 @@ const styles = StyleSheet.create({
 
     ContainerContent: { 
         flex: 1, 
-        backgroundColor: '#EDDFE0', 
-        borderTopLeftRadius: 30, 
-        borderTopRightRadius: 30 
+        backgroundColor: '#040D12', 
     },
 
     notify: {

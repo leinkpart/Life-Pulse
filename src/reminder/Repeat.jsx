@@ -61,13 +61,13 @@ const Repeat = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#E9EFEC',
+        backgroundColor: '#040D12',
         padding: 15,
     },
     
     contentContainer: {
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         borderRadius: 15
     },
   
@@ -82,12 +82,12 @@ const styles = StyleSheet.create({
 
     optionText: {
         fontSize: 16,
-        color: '#000',
+        color: '#fff',
     },
   
     customContainer: {
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         marginTop: 20,
         borderRadius: 14,
     },
@@ -100,12 +100,12 @@ const styles = StyleSheet.create({
     },
   
     customText: {
-        color: '#000',
+        color: '#fff',
         fontSize: 18,
     },
   
     iconForward: {
-        color: '#000',
+        color: '#999',
         fontSize: 20,
     }
   

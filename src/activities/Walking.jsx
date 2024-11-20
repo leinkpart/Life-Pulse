@@ -6,6 +6,7 @@ import { Pedometer } from 'expo-sensors'
 import { LineChart } from 'react-native-chart-kit'
 import Svg, { Circle } from 'react-native-svg'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { supabase } from '../../supabaseClient'
 
 export default function Component() {
     const [steps, setSteps] = useState(0)
@@ -13,35 +14,127 @@ export default function Component() {
     const goal = 18000
     const progress = (steps / goal) * 100
   
-    const [data, setData] = useState({
-      daily: [0, 1000, 2000, 1500, 2500, 3000, 2800],
-      weekly: [7000, 8000, 9000, 10000, 11000, 12000, 13000],
-      monthly: [40000, 42000, 45000, 47000, 50000, 52000, 54000],
-      yearly: [300000, 320000, 340000, 360000, 380000, 400000, 420000]
-    })
+    const [chartData, setChartData] = useState({ daily: [], weekly: [], monthly: [] });
 
     const calculateDistance = steps => (steps * 0.00075).toFixed(3)  // distance in km
     const calculateCalories = steps => (steps * 0.04).toFixed(0)    // kcal burned
     const calculateTime = steps => Math.floor(steps / 100)
 
-    const progressCalories = (steps) => {
-        const caloriesBurned = calculateCalories(steps);
-        const goalCalories = 720; // Giả sử mục tiêu là 720 kcal
-        return (caloriesBurned / goalCalories) * 100;
-    }
-      
-    const progressDistance = (steps) => {
-        const distanceCovered = calculateDistance(steps);
-        const goalDistance = 14.4; // Giả sử mục tiêu là 14.4 km
-        return (distanceCovered / goalDistance) * 100;
-    }
-      
-    const progressTime = (steps) => {
-        const timeSpent = calculateTime(steps);
-        const goalTime = 180; // Giả sử mục tiêu là 180 phút
-        return (timeSpent / goalTime) * 100;
-    }
+    const fetchStepData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('steps')
+          .select('*')
+          .order('date', { ascending: true });
+        
+        if (error) throw error;
+  
+        const daily = data.slice(-7).map((item) => item.steps);
+        const weekly = data.slice(-28).reduce((acc, item, index) => {
+          const weekIndex = Math.floor(index / 7);
+          if (!acc[weekIndex]) acc[weekIndex] = 0;
+          acc[weekIndex] += item.steps;
+          return acc;
+        }, []);
+        const monthly = data.slice(-84).reduce((acc, item, index) => {
+          const monthIndex = Math.floor(index / 28);
+          if (!acc[monthIndex]) acc[monthIndex] = 0;
+          acc[monthIndex] += item.steps;
+          return acc;
+        }, []);
+  
+        setChartData({ daily, weekly, monthly });
+      } catch (error) {
+        console.error('Error fetching steps:', error);
+      }
+    };
 
+    // Lưu dữ liệu bước chân vào Supabase
+    const saveStepsToSupabase = async (steps) => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Không tìm thấy thông tin người dùng');
+    
+        const today = new Date().toISOString().split('T')[0];
+        const { error } = await supabase
+          .from('steps')
+          .upsert({ 
+            date: today, 
+            steps: steps,
+            user_id: user.id  // Thêm user_id vào đây
+          }, { onConflict: 'date,user_id' });
+    
+        if (error) throw error;
+      } catch (error) {
+        console.error('Lỗi khi lưu số bước chân:', error);
+        Alert.alert('Lỗi', 'Không thể lưu số bước chân. Vui lòng thử lại.');
+      }
+    };
+
+    useEffect(() => {
+      let subscription;
+      const startPedometerUpdates = async () => {
+        try {
+          const isAvailable = await Pedometer.isAvailableAsync();
+          if (isAvailable) {
+            const end = new Date();
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const result = await Pedometer.getStepCountAsync(start, end);
+            if (result) {
+              setSteps(result.steps);
+            }
+            subscription = Pedometer.watchStepCount(result => {
+              setSteps(prevSteps => prevSteps + result.steps);
+            });
+          } else {
+            console.log("Pedometer is not available on this device.");
+          }
+        } catch (error) {
+          console.log("Error setting up pedometer:", error);
+        }
+      };
+  
+      startPedometerUpdates();
+      fetchStepData();
+  
+      const intervalId = setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 0 && now.getMinutes() === 0) {
+          saveStepsToSupabase(steps);
+          setSteps(0);
+        }
+      }, 60000);
+  
+      return () => {
+        if (subscription) {
+          subscription.remove();
+        }
+        clearInterval(intervalId);
+      };
+    }, []);
+  
+    useEffect(() => {
+      saveStepsToSupabase(steps);
+    }, [steps]);
+
+    const getLabels = () => {
+      switch (selectedTab) {
+        case 'daily':
+          return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        case 'weekly':
+          return ['W1', 'W2', 'W3', 'W4'];
+        case 'monthly':
+          return ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+        default:
+          return [];
+      }
+    };
+  
+    const getData = () => {
+      return chartData[selectedTab];
+    };
+  
     useEffect(() => {
         let intervalId;
     
@@ -65,38 +158,7 @@ export default function Component() {
         return () => clearInterval(intervalId); // Xóa bỏ interval khi component unmount
     }, []);    
 
-    useEffect(() => {
-        let subscription;
-    
-        // Kiểm tra Pedometer có khả dụng không
-        Pedometer.isAvailableAsync().then(
-          (result) => {
-            console.log("Pedometer available: ", result); // Kiểm tra kết quả trả về
-            if (result) {
-              // Bắt đầu đăng ký cập nhật bước chân
-              subscription = Pedometer.watchStepCount(result => {
-                console.log("Steps detected: ", result.steps); // Log số bước đã đếm
-                setSteps(result.steps);
-              });
-            } else {
-              console.log("Pedometer is not available on this device.");
-            }
-          },
-          (error) => {
-            console.log("Error checking pedometer availability: ", error);
-          }
-        );
-    
-        // Cleanup đăng ký khi component bị hủy
-        return () => {
-          if (subscription) {
-            subscription.remove();
-          }
-        };
-    }, []);    
-      
-
-  const CircularProgress = ({ size, strokeWidth, progress }) => {
+    const CircularProgress = ({ size, strokeWidth, progress }) => {
     const radius = (size - strokeWidth) / 2
     const circumference = radius * 2 * Math.PI
     const strokeDashoffset = circumference - (progress / 100) * circumference
@@ -127,25 +189,6 @@ export default function Component() {
     )
   }
 
-  const getLabels = () => {
-    switch (selectedTab) {
-      case 'daily':
-        return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-      case 'weekly':
-        return ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7']
-      case 'monthly':
-        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-      case 'yearly':
-        return ['2020', '2021', '2022', '2023', '2024', '2025', '2026']
-      default:
-        return []
-    }
-  }
-
-  const getData = () => {
-    return data[selectedTab]
-  }
-
   return (
       <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -157,7 +200,7 @@ export default function Component() {
         <View style={styles.progressContainer}>
           <CircularProgress size={250} strokeWidth={20} progress={progress} />
           <View style={styles.stepsContainer}>
-            <MaterialCommunityIcons name="walk" size={24} color="#6C63FF" />
+            <MaterialCommunityIcons name="walk" size={38} color="#E91E63" marginTop={-15} />
             <Text style={styles.stepsText}>{steps}</Text>
             <Text style={styles.stepsLabel}>steps</Text>
           </View>
@@ -165,22 +208,22 @@ export default function Component() {
 
         <View style={styles.statsContainer}>
           <View style={styles.stat}>
-            <CircularProgress size={60} strokeWidth={5} progress={progressCalories(steps)} />
+            <CircularProgress size={60} strokeWidth={5} progress={(calculateCalories(steps) / 720) * 100} />
             <Text style={styles.statValue}>{calculateCalories(steps)} kcal</Text>
           </View>
           <View style={styles.stat}>
-            <CircularProgress size={60} strokeWidth={5} progress={progressDistance(steps)} />
+            <CircularProgress size={60} strokeWidth={5} progress={(calculateDistance(steps) / 14.4) * 100} />
             <Text style={styles.statValue}>{calculateDistance(steps)} km</Text>
           </View>
           <View style={styles.stat}>
-            <CircularProgress size={60} strokeWidth={5} progress={progressTime(steps)} />
+            <CircularProgress size={60} strokeWidth={5} progress={(calculateTime(steps) / 180) * 100} />
             <Text style={styles.statValue}>{calculateTime(steps)} min</Text>
           </View>
         </View>
 
         <View style={styles.chartContainer}>
         <View style={styles.tabs}>
-          {['daily', 'weekly', 'monthly', 'yearly'].map(tab => (
+          {['daily', 'weekly', 'monthly'].map(tab => (
             <TouchableOpacity key={tab} onPress={() => setSelectedTab(tab)}>
               <Text style={[styles.tab, selectedTab === tab && styles.activeTab]}>
                 {tab.toUpperCase()}
@@ -193,16 +236,16 @@ export default function Component() {
                 labels: getLabels(),
                 datasets: [{ data: getData() }]
               }}
-            width={Dimensions.get('window').width - 40}
+            width={Dimensions.get('window').width - 30}
             height={180}
             chartConfig={{
-              backgroundColor: '#F8F7FF',
-              backgroundGradientFrom: '#F8F7FF',
-              backgroundGradientTo: '#F8F7FF',
+              backgroundColor: '#4c4c4d',
+              backgroundGradientFrom: '#4c4c4d',
+              backgroundGradientTo: '#4c4c4d',
               decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(108, 99, 255, ${opacity})`,
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               style: {
-                borderRadius: 16
+                borderRadius: 16,
               }
             }}
             bezier
@@ -217,11 +260,11 @@ export default function Component() {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 20, // Extra padding for scrolling
+    paddingBottom: 20,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#040D12',
     // padding: 20,
   },
   title: {
@@ -229,11 +272,13 @@ const styles = StyleSheet.create({
     color: '#6C63FF',
     textAlign: 'center',
     marginTop: 20,
+    fontWeight: '700'
   },
   subtitle: {
     fontSize: 18,
     textAlign: 'center',
     marginTop: 10,
+    color: '#fff'
   },
   highlight: {
     color: '#6C63FF',
@@ -252,10 +297,11 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     marginTop: 10,
+    color: '#fff'
   },
   stepsLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#999',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -268,11 +314,11 @@ const styles = StyleSheet.create({
   statValue: {
     marginTop: 5,
     fontSize: 12,
-    color: '#666',
+    color: '#999',
   },
   chartContainer: {
     marginTop: 30,
-    backgroundColor: '#F8F7FF',
+    backgroundColor: '#4c4c4d',
     borderRadius: 20,
     padding: 15,
   },
@@ -283,15 +329,15 @@ const styles = StyleSheet.create({
   },
   tab: {
     marginHorizontal: 15,
-    color: '#666',
-    fontSize: 12,
+    color: '#999',
+    fontSize: 14,
   },
   activeTab: {
-    color: '#6C63FF',
+    color: '#fff',
     fontWeight: 'bold',
   },
   chart: {
-    marginVertical: 8,
+    marginVertical: 10,
     borderRadius: 16,
   },
 })

@@ -167,12 +167,15 @@ const EditRemind = ({ navigation, route }) => {
     
                 <View style={styles.detailContainer}>
                     <View style={styles.dateContainer}>
-                        <Text style={styles.dayText}>
+                        <View style={styles.iconText}>
                             <View style={styles.iconDays}>
                                 <FontAwesome6 name="calendar-days" size={16} color="#fff" />
                             </View>
-                            Date
-                        </Text>
+                            <Text style={styles.textTxt}>                              
+                                Date
+                            </Text>
+                        </View>
+
                         <Switch
                             trackColor={{ false: "#B3C8CF", true: "#00C853" }}
                             thumbColor={isDateEnabled ? "#FEF9F2" : "#f4f3f4"}
@@ -210,12 +213,15 @@ const EditRemind = ({ navigation, route }) => {
                     </Animated.View>
 
                     <View style={styles.timeContainer}>
-                        <Text style={styles.timeText}>
+                        <View style={styles.iconText}>
                             <View style={styles.iconTimes}>
                                 <Ionicons name="time" size={20} color="#fff" />
                             </View>
-                            Time
-                        </Text>
+                            <Text style={styles.textTxt}>                              
+                                Time
+                            </Text>
+                        </View>
+
                         <Switch
                             trackColor={{ false: "#B3C8CF", true: "#00C853" }}
                             thumbColor={isTimeEnabled ? "#FEF9F2" : "#f4f3f4"}
@@ -254,12 +260,14 @@ const EditRemind = ({ navigation, route }) => {
 
                 <View style={styles.detailContainer}>
                     <TouchableOpacity style={styles.detailBtn} onPress={() => navigation.navigate('Repeat')} >
-                        <Text style={styles.detailText}>
+                        <View style={styles.iconText}>
                             <View style={styles.iconRepeat}>
                                 <FontAwesome6 name="repeat" size={16} color="#fff" />
                             </View>
-                            Repeat
-                        </Text>
+                            <Text style={styles.textTxt}>                              
+                                Repeat
+                            </Text>
+                        </View>
                         <IconForward name="chevron-forward" style={styles.iconForward} />
                     </TouchableOpacity>
                 </View>
@@ -271,32 +279,32 @@ const EditRemind = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({ 
     container: {
-        backgroundColor: '#eddfe0',
+        backgroundColor: '#040D12',
         flex: 1
+    },
+
+    iconText: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRightHorizontal: 5
     },
 
     iconDays: {
         backgroundColor: '#ff4634',
         padding: 7,
         borderRadius: 7,
-        marginTop: -7,
-        marginRight: 5
     },
 
     iconTimes: {
         backgroundColor: '#7a78ed',
         padding: 5,
         borderRadius: 7,
-        marginTop: -7,
-        marginRight: 5
     },
 
     iconRepeat: {
         backgroundColor: '#7a78ed',
         padding: 7,
         borderRadius: 7,
-        marginTop: -7,
-        marginRight: 5,
     },
   
     headerAddReminder: {
@@ -307,7 +315,7 @@ const styles = StyleSheet.create({
         paddingLeft: 25,
         paddingRight: 25,
         paddingBottom: 12,
-        backgroundColor: '#fff',
+        backgroundColor: '#1A1A1D',
         borderBottomWidth: 0.5,
         borderColor: 'gray'     
     },
@@ -320,18 +328,19 @@ const styles = StyleSheet.create({
   
     newReminderTxt: {
         fontSize: 18,
-        color: '#000',
+        color: '#fff',
         fontWeight: '700',
     },
   
     AddTxtDisabled: {
-        color: '#777', 
+        color: '#777',
+        fontWeight: '650' 
     },
   
     AddTxt: {
         fontSize: 16,
         color: '#00C853',
-        fontWeight: '550'
+        fontWeight: '650'
     },
   
     scrollContainer: {
@@ -339,7 +348,7 @@ const styles = StyleSheet.create({
     },
   
     contentContainer: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         borderRadius: 14,
         margin: 20,
         padding: 15,
@@ -350,7 +359,7 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
         marginBottom: 10,
         borderRadius: 4,
-        color: '#000',
+        color: '#fff',
         fontSize: 20,
     },
   
@@ -368,7 +377,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 5,
         borderRadius: 4,
-        color: '#000',
+        color: '#fff',
         fontSize: 18,
     },
 
@@ -376,26 +385,27 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         paddingBottom: 15,
         paddingLeft: 5,
         paddingRight: 5,
         borderRadius: 10,
     },
 
-    dayText: {
-        color: '#000',
+    textTxt: {
+        color: '#fff',
         fontSize: 18,
+        marginLeft: 5
     },
 
     calendarTimeContainer: {
-        backgroundColor: '#F0F0F0',
+        backgroundColor: '#444',
         borderRadius: 10,
-        overflow: 'hidden',
+        // overflow: 'hidden',
     },
 
     selectedDateText: {
-        color: '#000',
+        color: '#fff',
         fontSize: 18,
         marginBottom: 10,
         paddingTop: 10,
@@ -423,20 +433,15 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 5,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         paddingBottom: 15,
         paddingLeft: 5,
         paddingRight: 5,
         borderRadius: 10,
     },
     
-    timeText: {
-        color: '#000',
-        fontSize: 18,
-    },
-    
     selectedTimeText: {
-        color: '#000',
+        color: '#fff',
         fontSize: 18,
         marginBottom: 10,
         paddingTop: 10,
@@ -444,10 +449,9 @@ const styles = StyleSheet.create({
         fontWeight: '500',  
     },
     
-  
     detailContainer: {
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         marginLeft: 20,
         marginRight: 20,
         borderRadius: 14,
@@ -465,12 +469,6 @@ const styles = StyleSheet.create({
         alignContent: 'center',
         justifyContent: 'space-between',
         width: '100%',
-    },
-  
-    detailText: {
-        color: '#000',
-        fontSize: 18,
-        marginLeft: 7
     },
   
     iconForward: {

@@ -6,14 +6,12 @@ import Icon from "react-native-vector-icons/Ionicons"
 import DarkLightTheme from "react-native-vector-icons/MaterialCommunityIcons"
 import DarkTheme from "react-native-vector-icons/MaterialIcons";
 import LightTheme from "react-native-vector-icons/Feather";
-import { useTheme } from '../../component/theme';
-
 
 
 const SettingsScreen = () => {
     const [shakeDevice, setShakeDevice] = useState(false);
     const [threeFingerLongPress, setThreeFingerLongPress] = useState(false);
-    const { theme, setTheme } = useTheme('automatic');
+    const [ theme, setTheme ] = useState('automatic');
 
     const handleThemeChange = (newTheme) => {
         setTheme(newTheme);
@@ -29,19 +27,19 @@ const SettingsScreen = () => {
 
 
     return (      
-        <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#040D12' : '#eddfe0' }]}>
+        <View style={styles.container}>
             <ScrollView ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={[styles.header, { color: theme === 'dark' ? '#fff' : '#000' }]}>Theme</Text>
+                <Text style={styles.header}>Theme</Text>
 
-                <View style={[styles.box, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}>
+                <View style={styles.box}>
                     {/* <View style={[styles.option, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}>   */}
                         <TouchableOpacity
-                            style={[styles.optionButton, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}
-                            onPress={() => setTheme('automatic')}>
+                            style={styles.optionButton}
+                            onPress={() => handleThemeChange('automatic')}>
                             <View style={styles.IconView}>
-                                <DarkLightTheme name="theme-light-dark" style={[styles.IconStyle, { color: theme === 'dark' ? '#fff' : '#000' }]} />
+                                <DarkLightTheme name="theme-light-dark" style={styles.IconStyle} />
                                 <Text 
-                                    style={[styles.optionText, { color: theme === 'automatic' ? '#00C853' : theme === 'dark' ? '#fff' : '#000'}]}> 
+                                    style={[styles.optionText, { color: theme === 'automatic' ? '#00C853' : '#F5EFFF'}]}> 
                                     Automatic
                                 </Text>
                             </View>
@@ -49,22 +47,22 @@ const SettingsScreen = () => {
                             <Icon 
                                 name={theme === 'automatic' ? 'radio-button-on' : 'radio-button-off'} 
                                 size={24} 
-                                color={theme === 'automatic' ? '#00C853' : theme === 'dark' ? '#fff' : '#000'} 
+                                color={theme === 'automatic' ? '#00C853' : '#F5EFFF'} 
                                 style={styles.icon} 
                             />
                         </TouchableOpacity>
                     {/* </View> */}
 
-                    <View style={[styles.separator, { backgroundColor: theme === 'dark' ? '#555' : '#000' }]} />
+                    <View style={styles.separator} />
 
                     {/* <View style={[styles.option, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}> */}
                         <TouchableOpacity
-                            style={[styles.optionButton, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}
-                            onPress={() => setTheme('light')}>
-                            <View style={[styles.IconView, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                                <LightTheme name="sun" style={[styles.IconStyle, { color: theme === 'dark' ? '#fff' : '#000' }]} />
+                            style={styles.optionButton}
+                            onPress={() => handleThemeChange('light')}>
+                            <View style={styles.IconView}>
+                                <LightTheme name="sun" style={styles.IconStyle} />
                                 <Text
-                                    style={[styles.optionText, { color: theme === 'light' ? '#00C853' : theme === 'dark' ? '#fff' : '#000' }]}
+                                    style={[styles.optionText, { color: theme === 'light' ? '#00C853' : '#F5EFFF' }]}
                                 > Light
                                 </Text>
                             </View>
@@ -72,22 +70,22 @@ const SettingsScreen = () => {
                             <Icon 
                                 name={theme === 'light' ? 'radio-button-on' : 'radio-button-off'} 
                                 size={24} 
-                                color={theme === 'light' ? '#00C853' : theme === 'dark' ? '#fff' : '#000' } 
+                                color={theme === 'light' ? '#00C853' : '#F5EFFF' } 
                                 style={styles.icon} 
                             />
                         </TouchableOpacity>
                     {/* </View> */}
 
-                    <View style={[styles.separator, { backgroundColor: theme === 'dark' ? '#555' : '#000' }]}></View>
+                    <View style={styles.separator}></View>
 
                     {/* <View style={[styles.option, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}> */}
                         <TouchableOpacity
-                            style={[styles.optionButton, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}
-                            onPress={() => setTheme('dark')}>
-                            <View style={[styles.IconView, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                                <DarkTheme name="dark-mode" style={[styles.IconStyle, { color: theme === 'dark' ? '#fff' : '#000' }]} />
+                            style={styles.optionButton}
+                            onPress={() => handleThemeChange('dark')}>
+                            <View style={styles.IconView}>
+                                <DarkTheme name="dark-mode" style={styles.IconStyle} />
                                 <Text
-                                    style={[styles.optionText, { color: theme === 'dark' ? '#00C853' : theme === 'dark' ? '#fff' : '#000' }]}
+                                    style={[styles.optionText, { color: theme === 'dark' ? '#00C853' : '#F5EFFF' }]}
                                 > Dark                 
                                 </Text>
                             </View>
@@ -95,7 +93,7 @@ const SettingsScreen = () => {
                             <Icon 
                                 name={theme === 'dark' ? 'radio-button-on' : 'radio-button-off'} 
                                 size={24} 
-                                color={theme === 'dark' ? '#00C853' : '#000'} 
+                                color={theme === 'dark' ? '#00C853' : '#F5EFFF'} 
                                 style={styles.icon} 
                             />
                         </TouchableOpacity>
@@ -106,9 +104,9 @@ const SettingsScreen = () => {
                     Automatic is only supported on operating systems that allow you to control the system-wide color scheme.
                 </Text>
 
-                <Text style={[styles.header, { marginTop: 20 }, { color: theme === 'dark' ? '#fff' : '#000' }]}>Developer Menu Gestures</Text>
+                <Text style={[styles.header, { marginTop: 20 }]}>Developer Menu Gestures</Text>
                 
-                <View style={[styles.switchBox, { backgroundColor: theme === 'dark' ? '#1A2525' : '#fff' }]}>
+                <View style={styles.switchBox}>
                     <View style={styles.switchOption}>               
                         <Text style={[styles.optionText, {marginLeft: 16}]}>Shake device</Text>
                         <Switch
@@ -119,7 +117,7 @@ const SettingsScreen = () => {
                         />
                     </View>
 
-                    <View style={[styles.separator, { backgroundColor: theme === 'dark' ? '#555' : '#000' }]}></View>
+                    <View style={styles.separator}></View>
 
                     <View style={styles.switchOption}>
                         <Text style={[styles.optionText, {marginLeft: 16}]}>Three-finger long press</Text>
@@ -143,7 +141,7 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#eddfe0',
+        backgroundColor: '#040D12',
         paddingLeft: 20,
         paddingRight: 20,
         paddingTop: 10,
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#000',
+        color: '#f9f9f8',
         marginBottom: 10,
         marginLeft: 15,
         paddingTop: 10,
@@ -163,7 +161,7 @@ const styles = StyleSheet.create({
     box: {
         width: 375,
         height: 'auto',
-        backgroundColor: '#fff',
+        backgroundColor: '#2C2C2E',
         padding: 5,
         borderRadius: 15,
     },
@@ -178,7 +176,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignContent: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#fff',
+        backgroundColor: '#2C2C2E',
         padding: 15,
         borderRadius: 10,
         width: 360,
@@ -189,11 +187,11 @@ const styles = StyleSheet.create({
     },
     IconStyle: {
         fontSize: 26,
-        color: '#000',
+        color: '#F5EFFF',
     },
     switchBox: {
         width: 375,
-        backgroundColor: '#fff',
+        backgroundColor: '#2C2C2E',
         padding: 10,
         borderRadius: 15,
         marginTop: 10,
@@ -205,14 +203,14 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     separator: {
-        height: 1,
-        backgroundColor: '#000',
+        height: 0.5,
+        backgroundColor: '#888',
     },
     icon: {
         marginLeft: 10,
     },
     optionText: {
-        color: '#000',
+        color: '#F5EFFF',
         fontSize: 19,
         paddingLeft: 10,
         fontWeight: '500',

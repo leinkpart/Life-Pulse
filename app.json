@@ -2,7 +2,9 @@
   "expo": {
     "name": "LifePulse",
     "slug": "LifePulse",
+    "newArchEnabled": true,
     "version": "1.0.0",
+    "sdkVersion": "52.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.vanzlynk.lifepulse"
+      "package": "com.vanzlynk.lifepulse",
+      "permissions": ["NOTIFICATIONS"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,13 +36,27 @@
       [
         "expo-sensors",
         {
-          "motionPermission": "Allow $(PRODUCT_NAME) to access your device motion"
+          "motionPermission": "Allow LifePulse to access your device motion"
         }
       ],
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow LifePulse to access your location in the background."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow LifePulse to access your photos."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow LifePulse to access your camera",
+          "microphonePermission": "Allow LifePulse to access your microphone",
+          "recordAudioAndroid": true
         }
       ]
     ]

@@ -12,6 +12,15 @@ import {
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons, Ionicons, AntDesign} from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+    }),
+});
 
 
 const Reminder = ({ navigation, route, onDelete }) => {
@@ -19,9 +28,12 @@ const Reminder = ({ navigation, route, onDelete }) => {
     const [reminders, setReminders] = useState([]);
 
     useEffect(() => {
+        registerForPushNotificationsAsync();
         // Nếu có lời nhắc mới từ màn hình AddRemind, thêm nó vào danh sách
         if (route.params?.newReminder) {
-            setReminders(prevReminders => [...prevReminders, route.params.newReminder]);
+            const newReminder = route.params.newReminder;
+            setReminders(prevReminders => [...prevReminders, newReminder]);
+            scheduleNotification(newReminder);
         }
     }, [route.params?.newReminder]);
 
@@ -30,10 +42,51 @@ const Reminder = ({ navigation, route, onDelete }) => {
             setReminders((prevReminders) => {
                 const newReminders = [...prevReminders];
                 newReminders[route.params.index] = route.params.updatedReminder;
+                scheduleNotification(route.params.updatedReminder);
                 return newReminders;
             });
         }
     }, [route.params?.updatedReminder, route.params?.index]);
+
+    const registerForPushNotificationsAsync = async () => {
+        let token;
+        if (Platform.OS === 'android') {
+            await Notifications.setNotificationChannelAsync('default', {
+                name: 'default',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+            });
+        }
+
+        const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+            finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+            alert('Failed to get push token for push notification!');
+            return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log(token);
+    }
+
+    const scheduleNotification = async (reminder) => {
+        const [day, month, year] = reminder.date.split('/');
+        const [hours, minutes] = reminder.time.split(':');
+        const scheduledTime = new Date(year, month - 1, day, hours, minutes);
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: reminder.title,
+                body: reminder.description,
+            },
+            trigger: scheduledTime,
+            identifier: reminder.id,
+        });
+    };
   
     const [selectedTab, setSelectedTab] = useState('today'); 
     
@@ -50,7 +103,9 @@ const Reminder = ({ navigation, route, onDelete }) => {
     };
     
     // Hàm để xóa lời nhắc
-    const deleteReminder = (index) => {
+    const deleteReminder = async (index) => {
+        const reminderToDelete = reminders[index];
+        await Notifications.cancelScheduledNotificationAsync(reminderToDelete.id);
         const newReminders = [...reminders];
         newReminders.splice(index, 1);
         setReminders(newReminders);
@@ -100,13 +155,13 @@ const Reminder = ({ navigation, route, onDelete }) => {
                         style={[styles.deleteButton, { opacity: deleteOpacity }]} 
                         onPress={() => showDeleteAlert(index)} // Hiển thị alert khi nhấn nút "Xóa"
                     >
-                        <Ionicons name="trash" size={24} color="#fff" />
+                        <Ionicons name="trash" size={28} color="#fff" />
                     </TouchableOpacity>
                 );
             }}
             renderLeftActions={() => (
                 <TouchableOpacity style={styles.editButton} onPress={() => showEditAlert(index)}>
-                    <AntDesign name="edit" size={24} color="#fff" />
+                    <AntDesign name="edit" size={28} color="#fff" />
                 </TouchableOpacity>
             )}
         >
@@ -253,7 +308,7 @@ const styles = StyleSheet.create({
 
     container: {
         flex: 1,
-        backgroundColor: '#eddfe0',
+        backgroundColor: '#040D12',
         padding: 16,
     },
 
@@ -261,7 +316,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 10,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         borderRadius: 10,
         marginBottom: 16,
         elevation: 2,
@@ -271,7 +326,7 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 8,
         fontSize: 18,
-        color: '#000',
+        color: '#fff',
     },
 
     tabs: {
@@ -282,7 +337,7 @@ const styles = StyleSheet.create({
 
     tab: {
         padding: 10,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         borderRadius: 10,
         alignItems: 'center',
         elevation: 1,
@@ -309,13 +364,13 @@ const styles = StyleSheet.create({
     listTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#000',
+        color: '#fff',
         marginBottom: 16,
     },
 
     reminderItem: {
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: '#2c2c2d',
         borderRadius: 10,
         marginBottom: 3,
         elevation: 1,
@@ -324,25 +379,31 @@ const styles = StyleSheet.create({
     reminderTitle: {
         fontSize: 18,
         fontWeight: '500',
-        color: '#000',
+        color: '#fff',
+    },
+
+    reminderDescription: {
+        fontSize: 16,
+        fontWeight: '450',
+        color: '#fff',
     },
 
     reminderDate: {
         fontSize: 16,
         fontWeight: '400',
-        color: '#111',
+        color: '#fff',
     },
 
     reminderTime: {
         fontSize: 14,
         fontWeight: '400',
-        color: '#111',
+        color: '#fff',
     },
 
     emptyText: {
         textAlign: 'center',
         fontSize: 16,
-        color: '#000',
+        color: '#fff',
         fontWeight: '500',
         marginTop: 20,
     },
@@ -362,10 +423,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#ff3b30',
         justifyContent: 'center',
         alignItems: 'flex-end',
-        width: '50%',
+        width: '25%',
         height: '97%',
         borderRadius: 10,
-        paddingRight: 40
+        paddingRight: 35
     },
 
     // Cac style cuar Swiper Edit
@@ -373,10 +434,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#4CAF50',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        width: '50%',
+        width: '25%',
         height: '97%',
         borderRadius: 10,
-        paddingLeft: 40
+        paddingLeft: 35
     },
 });
 

@@ -8,74 +8,59 @@ import {
     SafeAreaView,
     ScrollView,
     Alert,
+    ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../supabaseClient';
+import { useNavigation } from '@react-navigation/native';
 
-const Login = ({ navigation }) => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false); // Hiển thị mật khẩu
     const [rememberMe, setRememberMe] = useState(false);
-
-    // useEffect(() => {
-    //     checkPersistedSession();
-    // }, []);
-
-    // const checkPersistedSession = async () => {
-    //     const session = await AsyncStorage.getItem('userSession');
-    //     // if (session) {
-    //     //     navigation.navigate('Home');
-    //     // }
-    // };
+    const [loading, setLoading] = useState(false);
+    const navigation = useNavigation();
 
     const handleLogin = async () => {
-        // Thực hiện kiểm tra đăng nhập ở đây
-        // if (!email.trim()) {
-        //     Alert.alert('Error', 'Please enter your email address');
-        //     return;
-        // }
-
-        // if (!password.trim()) {
-        //     Alert.alert('Error', 'Please enter your password');
-        //     return;
-        // }
-
-        // try {
-        //     const { data, error } = await supabase.auth.signInWithPassword({
-        //         email: email,
-        //         password: password,
-        //     });
-      
-        //     if (error) throw error;
-      
-        //     if (data.session) {
-        //         if (rememberMe) {
-        //             await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
-        //         }
-        //         navigation.navigate('Home');
-        //     }
-
-        //     useEffect(() => {
-        //         const checkSession = async () => {
-        //           const { data: { session } } = await supabase.auth.getSession();
-        //           if (!session) {
-                    // navigation.navigate('Login');
-        //           }
-        //         };
-        //         checkSession();
-        //     }, []);
-
-        // } catch (error) {
-        //     if (error.message === 'Invalid login credentials') {
-        //         Alert.alert('Error', 'Invalid email or password');
-        //     } else {
-        //         Alert.alert('Error', error.message);
-        //     }
-        // }
-        navigation.navigate('Home')
-    };
+        if (!email.trim() || !password.trim()) {
+            Alert.alert('Error', 'Email and password are required.');
+            return;
+        }
+    
+        setLoading(true);
+    
+        try {
+            // Đăng nhập với email và password
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+    
+            if (error) {
+                Alert.alert('Login Failed', error.message);
+                setLoading(false);
+                return;
+            }
+    
+            // Nếu đăng nhập thành công
+            if (data.session) {
+                // Chỉ lưu phiên đăng nhập nếu Remember Me được bật
+                if (rememberMe) {
+                    await AsyncStorage.setItem('supabaseSession', JSON.stringify(data.session));
+                }
+                Alert.alert('Success', 'Logged in successfully!');
+                navigation.navigate('HomeStack');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            Alert.alert('Error', 'Something went wrong. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };    
+    
 
     return (
         <SafeAreaView style={styles.container}>
@@ -137,8 +122,16 @@ const Login = ({ navigation }) => {
                     <Text style={styles.checkboxLabel}>Remember me</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                    <Text style={styles.loginButtonText}>Log in</Text>
+                <TouchableOpacity 
+                    style={styles.loginButton} 
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#0A1629" />
+                    ) : (
+                        <Text style={styles.loginButtonText}>Log in</Text>
+                    )}
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.signUpContainer} onPress={() => navigation.navigate('Register')}>
